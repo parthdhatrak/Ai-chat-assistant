@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-history" id="chatHistory">
+        {% for chat in chat_history %}
+            <div class="message user-message">
+                <p>{{ chat.message }}</p>
+            </div>
+            <div class="message ai-message">
+                <p>{{ chat.response }}</p>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <form id="chatForm" method="post">
+        {% csrf_token %}
+        <div class="input-container">
+            <textarea name="message" id="messageInput" placeholder="Type your message..." required></textarea>
+            <button type="submit">Send</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.chat-history {
+    height: 500px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 70%;
+}
+
+.user-message {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto;
+}
+
+.ai-message {
+    background-color: #f0f2f5;
+    margin-right: auto;
+}
+
+.input-container {
+    display: flex;
+    gap: 10px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+textarea {
+    flex-grow: 1;
+    padding: 12px;
+    height: 60px;
+    resize: none;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 25px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Add some animations */
+.message {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+// Replace the existing script section with this updated version
+<script>
+document.getElementById('chatForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    const messageInput = document.getElementById('messageInput');
+    const submitButton = form.querySelector('button');
+    const userMessage = formData.get('message');
+    
+    if (!userMessage.trim()) {
+        alert('Please enter a message');
+        return;
+    }
+    
+    // Disable input and button while processing
+    messageInput.disabled = true;
+    submitButton.disabled = true;
+    submitButton.innerHTML = 'Sending...';
+    
+    try {
+        const response = await fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'An error occurred');
+        }
+        
+        const chatHistory = document.getElementById('chatHistory');
+        
+        // Add user message
+        const userDiv = document.createElement('div');
+        userDiv.className = 'message user-message';
+        userDiv.innerHTML = `<p>${userMessage}</p>`;
+        
+        // Add AI message
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'message ai-message';
+        aiDiv.innerHTML = `<p>${data.response}</p>`;
+        
+        chatHistory.appendChild(userDiv);
+        chatHistory.appendChild(aiDiv);
+        
+        // Clear form and scroll to bottom
+        form.reset();
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert(error.message || 'An error occurred while sending the message. Please try again.');
+    } finally {
+        // Re-enable input and button
+        messageInput.disabled = false;
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Send';
+        messageInput.focus();
+    }
+});
+
+// Scroll to bottom on page load
+window.onload = function() {
+    const chatHistory = document.getElementById('chatHistory');
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+};
+</script>
+{% endblock %}
