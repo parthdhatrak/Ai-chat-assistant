@@ -1,17 +1,10 @@
-
-
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "index.js",
-        "use": "@vercel/node"
-      }
-    ],
-    "routes": [
-      {
+    "builds": [{
+        "src": "chatproject/wsgi.py",
+        "use": "@vercel/python"
+    }],
+    "routes": [{
         "src": "/(.*)",
-        "dest": "/index.js"
-      }
-    ]
-  }
+        "dest": "chatproject/wsgi.py"
+    }]
+}
